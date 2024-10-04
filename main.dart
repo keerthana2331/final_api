@@ -1,138 +1,13 @@
-import 'dart:convert'; // For encoding and decoding JSON
-import 'package:http/http.dart' as http; // For making HTTP requests
-import 'dart:io'; // For handling IO operations like reading files or user input
+import 'dart:io';
+import 'student.dart';
+import 'course.dart';
+import 'data_manager.dart';
 
 
-class Student {
-  String studentId;
-  String name;
-  List<String> enrolledCourses;
+Future<void> main() async {
+  final students = await DataManager.loadStudents();
+  final courses = await DataManager.loadCourses();
 
-  Student({required this.studentId, required this.name, this.enrolledCourses = const []});
-
-  Map<String, dynamic> toJson() {
-    return {
-      'studentId': studentId,
-      'name': name,
-      'enrolledCourses': enrolledCourses,
-    };
-  }
-
-  static Student fromJson(Map<String, dynamic> json) {
-    return Student(
-      studentId: json['studentId'],
-      name: json['name'],
-      enrolledCourses: List<String>.from(json['enrolledCourses']),
-    );
-  }
-}
-
-
-class Course {
-  String courseId;
-  String courseTitle;
-  String instructorName;
-
-  Course({required this.courseId, required this.courseTitle, required this.instructorName});
-
-  Map<String, dynamic> toJson() {
-    return {
-      'courseId': courseId,
-      'courseTitle': courseTitle,
-      'instructorName': instructorName,
-    };
-  }
-
-  static Course fromJson(Map<String, dynamic> json) {
-    return Course(
-      courseId: json['courseId'],
-      courseTitle: json['courseTitle'],
-      instructorName: json['instructorName'],
-    );
-  }
-}
-
-class DataManager {
-  static const String baseUrl = 'https://crudcrud.com/api/50e72191875a48c9ac64d217e779cbd1'; 
-
-
-  static Future<Map<String, Student>> loadStudents() async {
-    Map<String, Student> students = {};
-    try {
-      final response = await http.get(Uri.parse('$baseUrl/students'));
-      if (response.statusCode == 200) {
-        final jsonData = jsonDecode(response.body) as List<dynamic>;
-        for (var item in jsonData) {
-          var student = Student.fromJson(item as Map<String, dynamic>);
-          students[student.studentId] = student;
-        }
-      } else {
-        print('Failed to load students: ${response.statusCode}');
-      }
-    } catch (e) {
-      print('Error loading students: $e');
-    }
-    return students;
-  }
-
-  
-  static Future<void> saveStudent(Student student) async {
-    try {
-      final response = await http.post(
-        Uri.parse('$baseUrl/students'),
-        headers: {'Content-Type': 'application/json'},
-        body: jsonEncode(student.toJson()),
-      );
-      if (response.statusCode == 201) {
-        print('Student saved successfully.');
-      } else {
-        print('Failed to save student: ${response.statusCode}');
-      }
-    } catch (e) {
-      print('Error saving student: $e');
-    }
-  }
-
-  
-  static Future<Map<String, Course>> loadCourses() async {
-    Map<String, Course> courses = {};
-    try {
-      final response = await http.get(Uri.parse('$baseUrl/courses'));
-      if (response.statusCode == 200) {
-        final jsonData = jsonDecode(response.body) as List<dynamic>;
-        for (var item in jsonData) {
-          var course = Course.fromJson(item as Map<String, dynamic>);
-          courses[course.courseId] = course;
-        }
-      } else {
-        print('Failed to load courses: ${response.statusCode}');
-      }
-    } catch (e) {
-      print('Error loading courses: $e');
-    }
-    return courses;
-  }
-
-  
-  static Future<void> saveCourse(Course course) async {
-    try {
-      final response = await http.post(
-        Uri.parse('$baseUrl/courses'),
-        headers: {'Content-Type': 'application/json'},
-        body: jsonEncode(course.toJson()),
-      );
-      if (response.statusCode == 201) {
-        print('Course saved successfully.');
-      } else {
-        print('Failed to save course: ${response.statusCode}');
-      }
-    } catch (e) {
-      print('Error saving course: $e');
-    }
-  }
-}
-
-void main() async {
   bool running = true;
 
   while (running) {
@@ -147,37 +22,37 @@ void main() async {
     print('8. Update Student');
     print('9. Update Course');
     print('10. Exit');
-    String choice = readInput('Choose an option', validChoices: [
-      '1', '2', '3', '4', '5', '6', '7', '8', '9', '10'
-    ]);
+    
+    String choice = readInput('Choose an option :',
+        validChoices: ['1', '2', '3', '4', '5', '6', '7', '8', '9', '10']);
 
     switch (choice) {
       case '1':
-        await createStudent();
+        await createStudent(students, courses);
         break;
       case '2':
-        await createCourse();
+        await createCourse(courses);
         break;
       case '3':
-        await enrollStudentInCourse();
+        await enrollStudentInCourse(students, courses);
         break;
       case '4':
-        await viewStudentSchedule();
+        await viewStudentSchedule(students);
         break;
       case '5':
-        await viewCourseRoster();
+        await viewCourseRoster(courses);
         break;
       case '6':
-        await dropCourse();
+        await dropCourse(students, courses);
         break;
       case '7':
-        await dropStudent();
+        await dropStudent(students);
         break;
       case '8':
-        await updateStudent();
+        await updateStudent(students);
         break;
       case '9':
-        await updateCourse();
+        await updateCourse(courses);
         break;
       case '10':
         running = false;
@@ -189,321 +64,241 @@ void main() async {
   }
 }
 
-const String coursesApiUrl = '/courses';
+Future<void> createStudent(Map<String, Student> students, Map<String, Course> courses) async {
+  // Prompt for the student ID with uniqueness check
+  String studentId = readInput('Enter student ID : ', existingIds: students.keys.toList());
 
-
-Future<void> loadCourses() async {
-  try {
-    final response = await http.get(Uri.parse(coursesApiUrl));
-    
-    if (response.statusCode == 200) {
-      
-      List<dynamic> jsonResponse = json.decode(response.body);
-     
-      if (jsonResponse.isNotEmpty) {
-        for (var course in jsonResponse) {
-          print('Course Title: ${course['courseTitle']}, Course ID: ${course['courseId']}, Instructor: ${course['instructor']}');
-        }
-      } else {
-        print('No courses available.');
-      }
-    } else {
-      print('Failed to load courses: ${response.statusCode}');
-    }
-  } catch (e) {
-    print('Error loading courses: $e');
-  }
-}
-
-
-
-
-
-Future<void> enrollStudentInCourse() async {
-  String studentId = readInput('Enter student ID (numeric)', isId: true);
-  String courseId = readInput('Enter course ID (numeric)', isId: true);
-
+  String name = readInput('Enter student name : ');
   
-  Map<String, Student> students = await DataManager.loadStudents();
-  Map<String, Course> courses = await DataManager.loadCourses();
 
- 
-  if (!students.containsKey(studentId)) {
-    print('Error: Student with ID $studentId does not exist.');
-    return;
-  }
-  if (!courses.containsKey(courseId)) {
-    print('Error: Course with ID $courseId does not exist.');
-    return;
-  }
+  String coursesInput = readInput('Enter course IDs the student is enrolled in (comma-separated) : ', isOptional: true);
+  List<String> selectedCourses = coursesInput.isNotEmpty
+      ? coursesInput.split(',').map((e) => e.trim()).toList()
+      : [];
 
-  
-  Student student = students[studentId]!;
-  student.enrolledCourses.add(courseId);
-  await DataManager.saveStudent(student);
-  print('Student $studentId enrolled in course $courseId successfully.');
-}
-
-Future<void> createStudent() async {
-  String name = readInput('Enter student name', validChoices: null, isName: true);
-  String studentId = readInput('Enter student ID (numeric)', validChoices: null, isId: true);
-
- 
-  Map<String, Student> students = await DataManager.loadStudents();
-  
-  
-  if (students.containsKey(studentId)) {
-    print('Error: A student with ID $studentId already exists.');
-    return;
-  }
-
-  
-  Map<String, Course> courses = await DataManager.loadCourses();
-  print('Available Courses:');
-  if (courses.isEmpty) {
-    print('No courses available to select.');
-    return;
-  }
-
-  for (var course in courses.values) {
-    print('${course.courseId}: ${course.courseTitle}');
-  }
-
-  String courseChoice = readInput('Select a course by ID', validChoices: courses.keys.toList());
-  String selectedCourseId = courseChoice;
-
-  
-  Student newStudent = Student(studentId: studentId, name: name, enrolledCourses: []);
-  
- 
-  if (newStudent.enrolledCourses.contains(selectedCourseId)) {
-    print('Error: Student is already enrolled in this course.');
-    return;
-  } else {
-    newStudent.enrolledCourses.add(selectedCourseId);
-  }
-
- 
-  await DataManager.saveStudent(newStudent);
-  print('Student $name with ID $studentId has been successfully created and enrolled in the course.');
-}
-
-
-
-
-
-Future<void> createCourse() async {
-  Map<String, Course> courses = await DataManager.loadCourses();
-
-  String courseId;
-  do {
-    courseId = readInput('Enter course ID (numeric)', validChoices: null, isId: true);
+  List<String> validCourses = [];
+  for (var courseId in selectedCourses) {
     if (courses.containsKey(courseId)) {
-      print('Error: Course ID already exists. Please enter a unique ID.');
-      courseId = ''; 
-    }
-  } while (courseId.isEmpty);  
-
-  String courseTitle;
-  do {
-    courseTitle = readInput('Enter course title', validChoices: null, isName: true);
-    bool titleExists = courses.values.any((course) => course.courseTitle == courseTitle);
-    if (titleExists) {
-      print('Error: Course title already exists. Please enter a unique title.');
-      courseTitle = ''; 
-    }
-  } while (courseTitle.isEmpty); 
-  String instructorName = readInput('Enter instructor name', validChoices: null, isName: true);
-
-  Course course = Course(courseId: courseId, courseTitle: courseTitle, instructorName: instructorName);
-
-  await DataManager.saveCourse(course);
-  print('Course created successfully!');
-}
-
-Future<void> viewCourseRoster() async {
-  String courseId = readInput('Enter course ID (numeric)', validChoices: null, isId: true);
-
-  
-  Map<String, Student> students = await DataManager.loadStudents();
-
-  
-  List<String> enrolledStudents = [];
-  for (var student in students.values) {
-    if (student.enrolledCourses.contains(courseId)) {
-      enrolledStudents.add(student.studentId);
+      validCourses.add(courseId);
+    } else {
+      print('Course ID $courseId does not exist and will be ignored.');
     }
   }
 
- 
-  if (enrolledStudents.isEmpty) {
-    print('No students are enrolled in Course ID: $courseId.');
-  } else {
-    print('Roster for Course ID: $courseId');
-    for (var studentId in enrolledStudents) {
-      print('Student ID: $studentId');
-    }
-  }
+  // Create a new Student object
+  Student newStudent = Student(name, studentId, validCourses);
+  
+  // Add the new student to the map
+  students[studentId] = newStudent;
+
+  // Save the updated students map
+  await DataManager.saveStudents(students);
+
+  print('Student added successfully.');
 }
 
-Future<void> dropStudent() async {
-  String studentId = readInput('Enter student ID (numeric)', validChoices: null, isId: true);
-
- 
-  Map<String, Student> students = await DataManager.loadStudents();
-
+Future<void> createCourse(Map<String, Course> courses) async {
+  String courseTitle = readInput('Enter course title : ');
+  String courseId = readInput('Enter course ID : ', existingIds: courses.keys.toList());
+  String instructorName = readInput('Enter instructor name : ');
   
+  String studentsInput = readInput('Enter student IDs enrolled in the course (comma-separated) : ', isOptional: true);
+  List<String> enrolledStudents = studentsInput.isNotEmpty
+      ? studentsInput.split(',').map((e) => e.trim()).toList()
+      : [];
+
+  Course newCourse = Course(courseId, courseTitle, instructorName, enrolledStudents);
+
+  // Add the course to the courses map
+  courses[courseId] = newCourse;
+
+  // Now save the entire courses map
+  await DataManager.saveCourses(courses);
+
+  print('Course added successfully.');
+}
+
+Future<void> enrollStudentInCourse(Map<String, Student> students, Map<String, Course> courses) async {
+  String studentId = readInput('Enter student ID');
+  String courseId = readInput('Enter course ID');
+
   if (!students.containsKey(studentId)) {
-    print('Error: Student with ID $studentId does not exist.');
+    print('Student ID $studentId does not exist.');
     return;
   }
 
-  
-  students.remove(studentId);
-  print('Student $studentId dropped successfully.');
-}
-
-
-
-Future<void> dropCourse() async {
-  String studentId = readInput('Enter student ID (numeric)', validChoices: null, isId: true);
-  String courseId = readInput('Enter course ID (numeric)', validChoices: null, isId: true);
-
- 
-  Map<String, Student> students = await DataManager.loadStudents();
-
- 
-  if (!students.containsKey(studentId)) {
-    print('Error: Student with ID $studentId does not exist.');
-    return;
-  }
-
-  Student student = students[studentId]!;
-
-  
-  if (student.enrolledCourses.contains(courseId)) {
-    student.enrolledCourses.remove(courseId);
-    await DataManager.saveStudent(student);
-    print('Course $courseId dropped for student $studentId successfully.');
-  } else {
-    print('Error: Student is not enrolled in this course.');
-  }
-}
-
-Future<void> updateStudent() async {
-  String studentId = readInput('Enter student ID (numeric)', validChoices: null, isId: true);
-
-  
-  Map<String, Student> students = await DataManager.loadStudents();
-
-  
-  if (!students.containsKey(studentId)) {
-    print('Error: Student with ID $studentId does not exist.');
-    return;
-  }
-
-  String name = readInput('Enter new student name');
-  Student student = students[studentId]!;
-  student.name = name;
-  await DataManager.saveStudent(student);
-  print('Student $studentId updated successfully.');
-}
-Future<void> updateCourse() async {
-  String courseId = readInput('Enter course ID (numeric)', validChoices: null, isId: true);
-
-  
-  Map<String, Course> courses = await DataManager.loadCourses();
-
- 
   if (!courses.containsKey(courseId)) {
-    print('Error: Course with ID $courseId does not exist.');
+    print('Course ID $courseId does not exist.');
     return;
   }
 
-  String courseTitle = readInput('Enter new course title');
-  String instructorName = readInput('Enter new instructor name');
+  Student student = students[studentId]!;
+  Course course = courses[courseId]!;
+
+  if (!student.enrolledCourses.contains(courseId)) {
+    student.enrolledCourses.add(courseId);
+    course.enrolledStudents.add(studentId);
+    
+    await DataManager.saveStudents(students);
+    await DataManager.saveCourses(courses);
+    
+    print('Student $studentId enrolled in course $courseId successfully.');
+  } else {
+    print('Student $studentId is already enrolled in course $courseId.');
+  }
+}
+
+Future<void> viewStudentSchedule(Map<String, Student> students) async {
+  String studentId = readInput('Enter student ID');
+
+  if (!students.containsKey(studentId)) {
+    print('Student ID $studentId does not exist.');
+    return;
+  }
+
+  Student student = students[studentId]!;
+  print('Schedule for ${student.studentId}:');
+  if (student.enrolledCourses.isEmpty) {
+    print('No courses enrolled.');
+  } else {
+    for (var courseId in student.enrolledCourses) {
+      print('- Course ID: $courseId');
+    }
+  }
+}
+
+Future<void> viewCourseRoster(Map<String, Course> courses) async {
+  String courseId = readInput('Enter course ID');
+
+  if (!courses.containsKey(courseId)) {
+    print('Course ID $courseId does not exist.');
+    return;
+  }
 
   Course course = courses[courseId]!;
-  course.courseTitle = courseTitle;
-  course.instructorName = instructorName;
-  await DataManager.saveCourse(course);
+  print('Roster for course ${course.title}:');
+  if (course.enrolledStudents.isEmpty) {
+    print('No students enrolled.');
+  } else {
+    for (var studentId in course.enrolledStudents) {
+      print('- Student ID: $studentId');
+    }
+  }
+}
+
+Future<void> dropCourse(Map<String, Student> students, Map<String, Course> courses) async {
+  String studentId = readInput('Enter student ID');
+  String courseId = readInput('Enter course ID');
+
+  if (!students.containsKey(studentId)) {
+    print('Student ID $studentId does not exist.');
+    return;
+  }
+
+  if (!courses.containsKey(courseId)) {
+    print('Course ID $courseId does not exist.');
+    return;
+  }
+
+  Student student = students[studentId]!;
+  Course course = courses[courseId]!;
+
+  if (student.enrolledCourses.remove(courseId)) {
+    course.enrolledStudents.remove(studentId);
+    
+    await DataManager.saveStudents(students);
+    await DataManager.saveCourses(courses);
+    
+    print('Student $studentId dropped from course $courseId successfully.');
+  } else {
+    print('Student $studentId is not enrolled in course $courseId.');
+  }
+}
+
+Future<void> dropStudent(Map<String, Student> students) async {
+  String studentId = readInput('Enter the Student ID to drop', existingIds: students.keys.toList());
+
+  // Check if the student exists
+  if (students.containsKey(studentId)) {
+    // Remove the student from the map
+    students.remove(studentId);
+
+    // Save the updated students map
+    await DataManager.saveStudents(students);
+
+    print('Student removed successfully.');
+  } else {
+    print('Student with ID $studentId does not exist.');
+  }
+}
+
+Future<void> updateStudent(Map<String, Student> students) async {
+  String studentId = readInput('Enter student ID');
+
+  if (!students.containsKey(studentId)) {
+    print('Student ID $studentId does not exist.');
+    return;
+  }
+
+  String name = readInput('Enter new student name (leave blank to keep current name)');
+  List<String> enrolledCourses= students[studentId]!.enrolledCourses;
+
+  if (name.isNotEmpty) {
+    students[studentId]!.studentId = name;
+  }
+
+  // Add any other updates necessary here
+await DataManager.saveStudents(students); // Corrected from saveStudens to saveStudents
+
+  print('Student $studentId updated successfully.');
+}
+
+Future<void> updateCourse(Map<String, Course> courses) async {
+  String courseId = readInput('Enter course ID');
+
+  // Check if the course ID exists
+  if (!courses.containsKey(courseId)) {
+    print('Course ID $courseId does not exist.');
+    return;
+  }
+
+  // Get the existing course
+  Course existingCourse = courses[courseId]!;
+
+  // Prompt for new title and instructor name
+  String courseTitle = readInput('Enter new course title (leave blank to keep current title)');
+  String instructorName = readInput('Enter new instructor name (leave blank to keep current name)');
+
+  // Update title if provided
+  if (courseTitle.isNotEmpty) {
+    existingCourse.title = courseTitle;
+  }
+
+  // Update instructor name if provided
+  if (instructorName.isNotEmpty) {
+    existingCourse.instructorName = instructorName;
+  }
+
+  // Save the updated course back to the DataManager
+await DataManager.saveCourses(courses); // Corrected to save all courses
+ // Changed from saveCourses to saveCourse
   print('Course $courseId updated successfully.');
 }
 
-String readInput(String prompt, {List<String>? validChoices, bool isId = false, bool isName = false}) {
-  stdout.write('$prompt: ');
+
+String readInput(String prompt, {List<String>? validChoices, bool isOptional = false, List<String>? existingIds}) {
+  // Implement this method to read user input and validate based on the parameters.
+  // This function must be completed based on your specific input handling logic.
+  // Make sure to include any checks for existing IDs if provided.
+  stdout.write(prompt);
   String? input = stdin.readLineSync();
 
-  if (isId) {
-    while (input == null || input.isEmpty || !RegExp(r'^\d+$').hasMatch(input)) {
-      print('Invalid input. Please enter a valid numeric ID.');
-      stdout.write('$prompt: ');
-      input = stdin.readLineSync();
-    }
-  } else if (isName) {
-    while (input == null || input.isEmpty || !RegExp(r'^[a-zA-Z\s]+$').hasMatch(input)) {
-      print('Invalid input. Please enter a valid name (alphabetic characters only).');
-      stdout.write('$prompt: ');
-      input = stdin.readLineSync();
-    }
-  }
-  return input ?? '';
-}
-
-StudentInCourse() async {
-  String studentId = readInput('Enter student ID (numeric)', validChoices: null, isId: true);
-  String courseId = readInput('Enter course ID (numeric)', validChoices: null, isId: true);
-
- 
-  Map<String, Student> students = await DataManager.loadStudents();
-  Map<String, Course> courses = await DataManager.loadCourses();
-
- 
-  if (!students.containsKey(studentId)) {
-    print('Error: Student with ID $studentId does not exist.');
-    return;
+  // Example validation (you may adjust based on your needs)
+  while (input == null || (!isOptional && input.isEmpty) || (existingIds != null && existingIds.contains(input))) {
+    print('Invalid input. Please try again.');
+    stdout.write(prompt);
+    input = stdin.readLineSync();
   }
 
-  if (!courses.containsKey(courseId)) {
-    print('Error: Course with ID $courseId does not exist.');
-    return;
-  }
-
-  
-  Student student = students[studentId]!;
-  if (!student.enrolledCourses.contains(courseId)) {
-    student.enrolledCourses.add(courseId);
-    await DataManager.saveStudent(student);
-    print('Student $studentId enrolled in course $courseId successfully.');
-  } else {
-    print('Error: Student is already enrolled in this course.');
-  }
-}
-
-
-
-Future<void> viewStudentSchedule() async {
-  String studentId = readInput('Enter student ID (numeric)', validChoices: null, isId: true);
-
- 
-  Map<String, Student> students = await DataManager.loadStudents();
-
-  
-  if (!students.containsKey(studentId)) {
-    print('Error: Student with ID $studentId does not exist.');
-    return;
-  }
-
-  Student student = students[studentId]!;
-  print('Schedule for student ${student.name}:');
-
- 
-  if (student.enrolledCourses.isEmpty) {
-    print('Student ${student.name} is not enrolled in any courses. Please enroll in courses to view the schedule.');
-  } else {
-    print('Enrolled courses:');
-    for (var courseId in student.enrolledCourses) {
-      print('Course ID: $courseId');
-    }
-  }
+  return input;
 }

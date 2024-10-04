@@ -38,6 +38,12 @@
       "languageVersion": "3.0"
     },
     {
+      "name": "pedantic",
+      "rootUri": "file:///C:/Users/Keerthana/AppData/Local/Pub/Cache/hosted/pub.dev/pedantic-1.11.1",
+      "packageUri": "lib/",
+      "languageVersion": "2.12"
+    },
+    {
       "name": "source_span",
       "rootUri": "file:///C:/Users/Keerthana/AppData/Local/Pub/Cache/hosted/pub.dev/source_span-1.10.0",
       "packageUri": "lib/",
@@ -68,7 +74,7 @@
       "languageVersion": "2.12"
     }
   ],
-  "generated": "2024-10-04T05:33:22.313436Z",
+  "generated": "2024-10-04T05:39:41.120279Z",
   "generator": "pub",
   "generatorVersion": "3.5.3",
   "pubCache": "file:///C:/Users/Keerthana/AppData/Local/Pub/Cache"

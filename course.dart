@@ -1,28 +1,27 @@
-import 'dart:convert';
 
 class Course {
-  String courseId;
-  String courseTitle;
+  String courseid;
+  String title;
   String instructorName;
   List<String> enrolledStudents;
 
-  Course(this.courseId, this.courseTitle, this.instructorName, this.enrolledStudents);
+  Course(this.courseid, this.title, this.instructorName, [this.enrolledStudents = const []]);
 
+  // Convert a Course object into a Map object
+  Map<String, dynamic> toJson() => {
+        'id': courseid,
+        'title': title,
+        'instructorName': instructorName,
+        'enrolledStudents': enrolledStudents,
+      };
+
+  // Convert a Map object into a Course object
   factory Course.fromJson(Map<String, dynamic> json) {
     return Course(
-      json['courseId'] ?? 'Unknown', 
-      json['courseTitle'] ?? 'Unknown', 
-      json['instructorName'] ?? 'Unknown', 
-      List<String>.from(json['enrolledStudents'] ?? []), 
+      json['id'] as String,
+      json['title'] as String,
+      json['instructorName'] as String,
+      (json['enrolledStudents'] as List<dynamic>?)?.map((e) => e as String).toList() ?? [],
     );
-  }
-
-  Map<String, dynamic> toJson() {
-    return {
-      'courseId': courseId,
-      'courseTitle': courseTitle,
-      'instructorName': instructorName,
-      'enrolledStudents': enrolledStudents,
-    };
   }
 }

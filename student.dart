@@ -1,48 +1,25 @@
+
+
 class Student {
   String studentId;
-  String name;
+  String id;
   List<String> enrolledCourses;
 
-  Student({
-    required this.studentId,
-    required this.name,
-    required this.enrolledCourses,
-  });
+  Student(this.studentId, this.id, [this.enrolledCourses = const []]);
 
-  
-  bool isEnrolledInCourse(String courseId) {
-    return enrolledCourses.contains(courseId);
-  }
+  // Convert a Student object into a Map object
+  Map<String, dynamic> toJson() => {
+        'name': studentId,
+        'id': id,
+        'enrolledCourses': enrolledCourses,
+      };
 
-
-  void enrollInCourse(String courseId) {
-    if (!isEnrolledInCourse(courseId)) {
-      enrolledCourses.add(courseId);
-    } else {
-      print('Error: Student $name is already enrolled in course $courseId.');
-    }
-  }
-
-  
-  void dropCourse(String courseId) {
-    enrolledCourses.remove(courseId);
-  }
-
- 
-  Map<String, dynamic> toJson() {
-    return {
-      'studentId': studentId,
-      'name': name,
-      'enrolledCourses': enrolledCourses,
-    };
-  }
-
- 
-  static Student fromJson(Map<String, dynamic> json) {
+  // Convert a Map object into a Student object
+  factory Student.fromJson(Map<String, dynamic> json) {
     return Student(
-      studentId: json['studentId'],
-      name: json['name'],
-      enrolledCourses: List<String>.from(json['enrolledCourses']),
+      json['name'] as String,
+      json['id'] as String,
+      (json['enrolledCourses'] as List<dynamic>?)?.map((e) => e as String).toList() ?? [],
     );
   }
 }
