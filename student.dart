@@ -1,26 +1,48 @@
-import 'dart:convert';
-
 class Student {
-  String name;
   String studentId;
+  String name;
   List<String> enrolledCourses;
 
-  Student(this.name, this.studentId, this.enrolledCourses);
+  Student({
+    required this.studentId,
+    required this.name,
+    required this.enrolledCourses,
+  });
 
-  factory Student.fromJson(Map<String, dynamic> json) {
-
-    return Student(
-      json['name'] ?? 'Unknown', 
-      json['studentId'] ?? 'Unknown', 
-      List<String>.from(json['enrolledCourses'] ?? []), 
-    );
+  
+  bool isEnrolledInCourse(String courseId) {
+    return enrolledCourses.contains(courseId);
   }
 
+
+  void enrollInCourse(String courseId) {
+    if (!isEnrolledInCourse(courseId)) {
+      enrolledCourses.add(courseId);
+    } else {
+      print('Error: Student $name is already enrolled in course $courseId.');
+    }
+  }
+
+  
+  void dropCourse(String courseId) {
+    enrolledCourses.remove(courseId);
+  }
+
+ 
   Map<String, dynamic> toJson() {
     return {
-      'name': name,
       'studentId': studentId,
+      'name': name,
       'enrolledCourses': enrolledCourses,
     };
+  }
+
+ 
+  static Student fromJson(Map<String, dynamic> json) {
+    return Student(
+      studentId: json['studentId'],
+      name: json['name'],
+      enrolledCourses: List<String>.from(json['enrolledCourses']),
+    );
   }
 }
