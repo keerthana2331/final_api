@@ -1,30 +1,26 @@
-import 'student.dart';
-
 class Course {
-    String courseid;
-    String name;
-    String instructorName;
-    List<String> enrolledStudents;
+  String courseId;
+  String courseTitle;
+  String instructorName;
+  List<String> enrolledStudents;
 
+  Course(this.courseId, this.courseTitle, this.instructorName, this.enrolledStudents);
 
-    Course(this.name, this.courseid,this.instructorName,this.enrolledStudents);
+  factory Course.fromJson(Map<String, dynamic> json) {
+    return Course(
+      json['courseId'] ?? 'Unknown', 
+      json['courseTitle'] ?? 'Unknown', 
+      json['instructorName'] ?? 'Unknown', 
+      List<String>.from(json['enrolledStudents'] ?? []), 
+    );
+  }
 
-    factory Course.fromJson(Map<String, dynamic> json) {
-        return Course(
-            json['name'],
-            json['id'],
-            json['instructorname'],
-             List<String>.from(json['students']),
-
-        );
-    }
-
-    Map<String, dynamic> toJson() {
-        return {
-            'name': name,
-            'id': courseid,
-            'instructorname':instructorName,
-            'Student': enrolledStudents
-        };
-    }
+  Map<String, dynamic> toJson() {
+    return {
+      'courseId': courseId,
+      'courseTitle': courseTitle,
+      'instructorName': instructorName,
+      'enrolledStudents': enrolledStudents,
+    };
+  }
 }

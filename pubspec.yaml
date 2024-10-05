@@ -1,18 +1,11 @@
-name: student_course_enrollment_system
-description: A simple system for managing student enrollments and courses.
-
+name: enrollment_sysytem
+description: student enrollment system
 environment:
-  sdk: '>=2.12.0 <3.0.0'
-
+  sdk: '>=3.0.0 <4.0.0'
 dependencies:
-  http: ^0.13.5
-
+  http: ^0.13.6
+  json_annotation: ^4.5.0
+  path: ^1.8.0
 dev_dependencies:
-  # Add any development dependencies here
-  pedantic: ^1.11.0  # Optional, for linting and style guide
-
-# Optional section for Flutter projects
-# flutter:
-#   sdk: flutter
-
-# Add additional configuration as needed for your project
+  test: ^1.16.0
+# Only for Flutter projects
