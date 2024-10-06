@@ -76,11 +76,10 @@ void main() async {
   }
 }
 
-// Save student and course data
-void saveData(Map<String, Student> students, Map<String, Course> courses) {
-  ApiService.saveStudents(students);
-  ApiService.saveCourses(courses);
-  print('Data saved successfully.');
+Future<void> saveData(Map<String, Student> students, Map<String, Course> courses) async {
+  for (var student in students.values) {
+    await ApiService.saveStudent(student);  // Pass single student object
+  }
 }
 
 // Create a new student
@@ -121,11 +120,10 @@ void printAvailableCourses(Map<String, Course> courses) {
 
   print('Available Courses:');
   for (var course in courses.values) {
-    print('- Course ID: ${course.courseId}, Title: ${course.courseTitle}');
+    print('- Course ID: ${course.id}, Title: ${course.title}');
   }
 }
 
-// Create a new course
 void createCourse(Map<String, Course> courses) {
   String courseTitle = readInput('Enter course title');
   String courseId = readInput('Enter course ID',
@@ -135,14 +133,23 @@ void createCourse(Map<String, Course> courses) {
     'Enter student IDs enrolled in the course (comma-separated)',
     isOptional: true,
   );
+
   List<String> enrolledStudents = studentsInput.isNotEmpty
       ? studentsInput.split(',').map((e) => e.trim()).toList()
       : [];
 
-  courses[courseId] =
-      Course(courseId, courseTitle, instructorName, enrolledStudents);
+  // Create the Course object
+  Course newCourse = Course(courseId, courseTitle, instructorName, enrolledStudents);
+
+  // Add the course to the local map
+  courses[courseId] = newCourse;
+
+  // Save course to the API
+  ApiService.saveCourse(newCourse);
+
   print('Course added successfully.');
 }
+
 
 // Enroll a student in a course
 void enrollStudentInCourse(
@@ -191,7 +198,7 @@ void viewStudentSchedule(
     print('Student Schedule:');
     for (var courseId in student.enrolledCourses) {
       print(
-          '- Course ID: $courseId, Course Title: ${courses[courseId]?.courseTitle ?? 'Unknown'}');
+          '- Course ID: $courseId, Course Title: ${courses[courseId]?.title ?? 'Unknown'}');
     }
   }
 }
@@ -317,7 +324,7 @@ void updateCourse(Map<String, Course> courses) {
       ? newStudentsInput.split(',').map((e) => e.trim()).toList()
       : [];
 
-  course.courseTitle = newTitle;
+  course.title = newTitle;
   course.instructorName = newInstructor;
   course.enrolledStudents = newStudents;
 
