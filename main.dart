@@ -5,13 +5,13 @@ import 'utilis.dart';
 
 
 void main() async {
-  // Use 'await' to wait for the future to complete
+  
   Map<String, Student> students = await ApiService.loadStudents();
   Map<String, Course> courses = await ApiService.loadCourses();
   bool running = true;
 
   while (running) {
-    // Display the menu
+    
     print('\nStudent Course Enrollment System');
     print('1. Create Student');
     print('2. Create Course');
@@ -25,7 +25,7 @@ void main() async {
     print('10. Available Courses');
     print('11. Exit');
 
-    // Read user input for menu choice
+   
     String choice = readInput(
       'Choose an option',
       validChoices: ['1', '2', '3', '4', '5', '6', '7', '8', '9', '10', '11'],
@@ -78,11 +78,11 @@ void main() async {
 
 Future<void> saveData(Map<String, Student> students, Map<String, Course> courses) async {
   for (var student in students.values) {
-    await ApiService.saveStudent(student);  // Pass single student object
+    await ApiService.saveStudent(student);  
   }
 }
 
-// Create a new student
+
 void createStudent(Map<String, Student> students, Map<String, Course> courses) {
   String name = readInput('Enter student name');
   String studentId = readInput('Enter student ID',
@@ -111,7 +111,7 @@ void createStudent(Map<String, Student> students, Map<String, Course> courses) {
   print('Student added successfully.');
 }
 
-// Print available courses
+
 void printAvailableCourses(Map<String, Course> courses) {
   if (courses.isEmpty) {
     print('No courses available.');
@@ -138,20 +138,20 @@ void createCourse(Map<String, Course> courses) {
       ? studentsInput.split(',').map((e) => e.trim()).toList()
       : [];
 
-  // Create the Course object
+ 
   Course newCourse = Course(courseId, courseTitle, instructorName, enrolledStudents);
 
-  // Add the course to the local map
+  
   courses[courseId] = newCourse;
 
-  // Save course to the API
+  
   ApiService.saveCourse(newCourse);
 
   print('Course added successfully.');
 }
 
 
-// Enroll a student in a course
+
 void enrollStudentInCourse(
     Map<String, Student> students, Map<String, Course> courses) {
   String studentId = readInput(
@@ -180,7 +180,7 @@ void enrollStudentInCourse(
   }
 }
 
-// View a student's schedule
+
 void viewStudentSchedule(
     Map<String, Student> students, Map<String, Course> courses) {
   String studentId =
@@ -203,7 +203,7 @@ void viewStudentSchedule(
   }
 }
 
-// View a course's roster
+
 void viewCourseRoster(
     Map<String, Course> courses, Map<String, Student> students) {
   String courseId =
@@ -226,7 +226,7 @@ void viewCourseRoster(
   }
 }
 
-// Drop a course for a student
+
 void dropCourse(Map<String, Student> students, Map<String, Course> courses) {
   String studentId =
       readInput('Enter student ID', existingIds: students.keys.toList());
@@ -254,7 +254,7 @@ void dropCourse(Map<String, Student> students, Map<String, Course> courses) {
   }
 }
 
-// Drop a student from the system
+
 void dropStudent(Map<String, Student> students, Map<String, Course> courses) {
   String studentId =
       readInput('Enter student ID', existingIds: students.keys.toList());
@@ -277,7 +277,7 @@ void dropStudent(Map<String, Student> students, Map<String, Course> courses) {
       'Student dropped successfully from all courses and removed from the system.');
 }
 
-// Update a student's details
+
 void updateStudent(Map<String, Student> students) {
   String studentId =
       readInput('Enter student ID', existingIds: students.keys.toList());
@@ -303,7 +303,7 @@ void updateStudent(Map<String, Student> students) {
   print('Student updated successfully.');
 }
 
-// Update a course's details
+
 void updateCourse(Map<String, Course> courses) {
   String courseId =
       readInput('Enter course ID', existingIds: courses.keys.toList());

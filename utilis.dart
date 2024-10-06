@@ -1,6 +1,6 @@
 import 'dart:io';
 
-/// Function to read user input with validation options.
+
 String readInput(String prompt, {List<String>? validChoices, bool isUnique = false, List<String>? existingIds, bool isOptional = false}) {
   while (true) {
     stdout.write('$prompt: ');
@@ -8,7 +8,7 @@ String readInput(String prompt, {List<String>? validChoices, bool isUnique = fal
 
     if (input == null || input.trim().isEmpty) {
       if (isOptional) {
-        return ''; // Allow empty input if it's optional
+        return ''; 
       } else {
         print('Input cannot be empty. Please try again.');
         continue;

@@ -4,9 +4,9 @@ import 'student.dart';
 import 'course.dart';
 
 class ApiService {
-  static const String baseUrl = 'https://crudcrud.com/api/fd6aa6e720ba46238e0f347e883d0c9b'; // Replace with your API URL
+  static const String baseUrl ='https://crudcrud.com/api/1e6121f8dedf444d8842d7eb4d2362ef'; 
 
-  // Load students from the API
+  
   static Future<Map<String, Student>> loadStudents() async {
     try {
       final response = await http.get(Uri.parse('$baseUrl/students'));
@@ -24,10 +24,10 @@ class ApiService {
     } catch (e) {
       print('Error loading students: $e');
     }
-    return {}; // Return an empty map if loading fails or data is null
+    return {}; 
   }
 
-  // Load courses from the API
+  
   static Future<Map<String, Course>> loadCourses() async {
     try {
       final response = await http.get(Uri.parse('$baseUrl/courses'));
@@ -45,10 +45,10 @@ class ApiService {
     } catch (e) {
       print('Error loading courses: $e');
     }
-    return {}; // Return an empty map if loading fails or data is null
+    return {};
   }
 
-  // Save a single student to the API
+ 
   static Future<void> saveStudent(Student student) async {
     try {
       final json = jsonEncode(student.toJson());
@@ -59,7 +59,7 @@ class ApiService {
         body: json,
       );
 
-      // Check the response from the API
+      
       print('Response status: ${response.statusCode}');
       print('Response body: ${response.body}');
 
@@ -73,11 +73,11 @@ class ApiService {
     }
   }
 
- // Save a single course to the API
+
   static Future<void> saveCourse(Course course) async {
     try {
       final json = jsonEncode(course.toJson());
-      print('Request Body: $json'); // Debugging output
+      print('Request Body: $json'); 
 
       final response = await http.post(
         Uri.parse('$baseUrl/courses'),
@@ -85,7 +85,7 @@ class ApiService {
         body: json,
       );
 
-      // Log the status code and response body for debugging
+      
       print('Response status: ${response.statusCode}');
       print('Response body: ${response.body}');
 
