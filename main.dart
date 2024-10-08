@@ -1,17 +1,19 @@
-import 'api.dart';
+
 import 'student.dart';
 import 'course.dart';
-import 'utilis.dart';
+import 'api_service.dart';
+import 'utils.dart';
 
-
-void main() async {
+Future<void> main() async {
+  final apiService = ApiService('https://crudcrud.com/api/9f58b421d0b341659140daa39cf1828f');
   
-  Map<String, Student> students = await ApiService.loadStudents();
-  Map<String, Course> courses = await ApiService.loadCourses();
+
+  final students = await apiService.fetchStudents();
+  final courses = await apiService.loadCourses();
+
   bool running = true;
 
   while (running) {
-    
     print('\nStudent Course Enrollment System');
     print('1. Create Student');
     print('2. Create Course');
@@ -22,47 +24,39 @@ void main() async {
     print('7. Drop Student');
     print('8. Update Student');
     print('9. Update Course');
-    print('10. Available Courses');
-    print('11. Exit');
-
-   
-    String choice = readInput(
-      'Choose an option',
-      validChoices: ['1', '2', '3', '4', '5', '6', '7', '8', '9', '10', '11'],
-    );
+    print('10. Exit');
+    
+    String choice = readInput('Choose an option', validChoices: ['1', '2', '3', '4', '5', '6', '7', '8', '9', '10']);
 
     switch (choice) {
       case '1':
-        createStudent(students, courses);
+        await createStudent(apiService, students, courses);
         break;
       case '2':
-        createCourse(courses);
+        await createCourse(apiService, courses);
         break;
       case '3':
-        enrollStudentInCourse(students, courses);
+        await enrollStudentInCourse(apiService, students,courses);
         break;
       case '4':
-        viewStudentSchedule(students, courses);
+        await viewStudentSchedule(students, courses);
         break;
       case '5':
-        viewCourseRoster(courses, students);
+        await viewCourseRoster(courses, students);
         break;
       case '6':
-        dropCourse(students, courses);
+        await dropCourse(apiService, students, courses);
         break;
       case '7':
-        dropStudent(students, courses);
+        await dropStudent(apiService, students, courses);
         break;
       case '8':
-        updateStudent(students);
+        await updateStudent(apiService, students);
         break;
       case '9':
-        updateCourse(courses);
+        await updateCourse(apiService, courses);
         break;
       case '10':
-        printAvailableCourses(courses);
-        break;
-      case '11':
         running = false;
         print('Goodbye!');
         break;
@@ -70,30 +64,25 @@ void main() async {
         print('Invalid choice. Please try again.');
     }
 
-    if (choice != '11') {
-      saveData(students, courses);
+    if (choice != '9') {
+      await saveData(apiService, students, courses);
     }
   }
 }
 
-Future<void> saveData(Map<String, Student> students, Map<String, Course> courses) async {
-  for (var student in students.values) {
-    await ApiService.saveStudent(student);  
-  }
+Future<void> saveData(ApiService apiService, Map<String, Student> students, Map<String, Course> courses) async {
+  await apiService.saveStudents(students);
+  await apiService.saveCourses(courses);
+  print('Data saved successfully.');
 }
 
-
-void createStudent(Map<String, Student> students, Map<String, Course> courses) {
+Future<void> createStudent(ApiService apiService, Map<String, Student> students, Map<String, Course> courses) async {
   String name = readInput('Enter student name');
-  String studentId = readInput('Enter student ID',
-      isUnique: true, existingIds: students.keys.toList());
+  String studentId = readInput('Enter student ID', isUnique: true, existingIds: students.keys.toList());
 
   printAvailableCourses(courses);
 
-  String coursesInput = readInput(
-    'Enter course IDs the student is enrolled in (comma-separated)',
-    isOptional: true,
-  );
+  String coursesInput = readInput('Enter course IDs the student is enrolled in (comma-separated)', isOptional: true);
   List<String> selectedCourses = coursesInput.isNotEmpty
       ? coursesInput.split(',').map((e) => e.trim()).toList()
       : [];
@@ -111,58 +100,27 @@ void createStudent(Map<String, Student> students, Map<String, Course> courses) {
   print('Student added successfully.');
 }
 
-
-void printAvailableCourses(Map<String, Course> courses) {
-  if (courses.isEmpty) {
-    print('No courses available.');
-    return;
-  }
-
-  print('Available Courses:');
-  for (var course in courses.values) {
-    print('- Course ID: ${course.id}, Title: ${course.title}');
-  }
-}
-
-void createCourse(Map<String, Course> courses) {
+Future<void> createCourse(ApiService apiService, Map<String, Course> courses) async {
   String courseTitle = readInput('Enter course title');
-  String courseId = readInput('Enter course ID',
-      isUnique: true, existingIds: courses.keys.toList());
+  String courseId = readInput('Enter course ID', isUnique: true, existingIds: courses.keys.toList());
   String instructorName = readInput('Enter instructor name');
-  String studentsInput = readInput(
-    'Enter student IDs enrolled in the course (comma-separated)',
-    isOptional: true,
-  );
-
+  String studentsInput = readInput('Enter student IDs enrolled in the course (comma-separated)', isOptional: true);
   List<String> enrolledStudents = studentsInput.isNotEmpty
       ? studentsInput.split(',').map((e) => e.trim()).toList()
       : [];
 
- 
-  Course newCourse = Course(courseId, courseTitle, instructorName, enrolledStudents);
-
-  
-  courses[courseId] = newCourse;
-
-  
-  ApiService.saveCourse(newCourse);
-
+  courses[courseId] = Course(courseId, courseTitle, instructorName, enrolledStudents);
   print('Course added successfully.');
 }
 
-
-
-void enrollStudentInCourse(
-    Map<String, Student> students, Map<String, Course> courses) {
-  String studentId = readInput(
-      'Enter student ID', existingIds: students.keys.toList());
+Future<void> enrollStudentInCourse(ApiService apiService, Map<String, Student> students, Map<String, Course> courses) async {
+  String studentId = readInput('Enter student ID', existingIds: students.keys.toList());
   if (!students.containsKey(studentId)) {
     print('Student with ID $studentId does not exist.');
     return;
   }
 
-  String courseId =
-      readInput('Enter course ID', existingIds: courses.keys.toList());
+  String courseId = readInput('Enter course ID', existingIds: courses.keys.toList());
   if (!courses.containsKey(courseId)) {
     print('Course with ID $courseId does not exist.');
     return;
@@ -180,11 +138,8 @@ void enrollStudentInCourse(
   }
 }
 
-
-void viewStudentSchedule(
-    Map<String, Student> students, Map<String, Course> courses) {
-  String studentId =
-      readInput('Enter student ID', existingIds: students.keys.toList());
+Future<void> viewStudentSchedule(Map<String, Student> students, Map<String, Course> courses) async {
+  String studentId = readInput('Enter student ID', existingIds: students.keys.toList());
 
   if (!students.containsKey(studentId)) {
     print('Student with ID $studentId does not exist.');
@@ -197,17 +152,13 @@ void viewStudentSchedule(
   } else {
     print('Student Schedule:');
     for (var courseId in student.enrolledCourses) {
-      print(
-          '- Course ID: $courseId, Course Title: ${courses[courseId]?.title ?? 'Unknown'}');
+      print('- Course ID: $courseId, Course Title: ${courses[courseId]?.courseTitle ?? 'Unknown'}');
     }
   }
 }
 
-
-void viewCourseRoster(
-    Map<String, Course> courses, Map<String, Student> students) {
-  String courseId =
-      readInput('Enter course ID', existingIds: courses.keys.toList());
+Future<void> viewCourseRoster(Map<String, Course> courses, Map<String, Student> students) async {
+  String courseId = readInput('Enter course ID', existingIds: courses.keys.toList());
 
   if (!courses.containsKey(courseId)) {
     print('Course with ID $courseId does not exist.');
@@ -220,18 +171,14 @@ void viewCourseRoster(
   } else {
     print('Course Roster:');
     for (var studentId in course.enrolledStudents) {
-      print(
-          '- Student ID: $studentId, Name: ${students[studentId]?.name ?? 'Unknown'}');
+      print('- Student ID: $studentId, Name: ${students[studentId]?.name ?? 'Unknown'}');
     }
   }
 }
 
-
-void dropCourse(Map<String, Student> students, Map<String, Course> courses) {
-  String studentId =
-      readInput('Enter student ID', existingIds: students.keys.toList());
-  String courseId =
-      readInput('Enter course ID', existingIds: courses.keys.toList());
+Future<void> dropCourse(ApiService apiService, Map<String, Student> students, Map<String, Course> courses) async {
+  String studentId = readInput('Enter student ID', existingIds: students.keys.toList());
+  String courseId = readInput('Enter course ID', existingIds: courses.keys.toList());
 
   if (!students.containsKey(studentId)) {
     print('Student with ID $studentId does not exist.');
@@ -254,17 +201,20 @@ void dropCourse(Map<String, Student> students, Map<String, Course> courses) {
   }
 }
 
-
-void dropStudent(Map<String, Student> students, Map<String, Course> courses) {
-  String studentId =
-      readInput('Enter student ID', existingIds: students.keys.toList());
+Future<void> dropStudent(ApiService apiService, Map<String, Student> students, Map<String, Course> courses) async {
+  String studentId = readInput('Enter student ID', existingIds: students.keys.toList());
 
   if (!students.containsKey(studentId)) {
     print('Student with ID $studentId does not exist.');
     return;
   }
 
-  Student student = students[studentId]!;
+  Student? student = students[studentId];
+
+  if (student == null) {
+    print('Student not found.');
+    return;
+  }
 
   for (String courseId in student.enrolledCourses) {
     Course course = courses[courseId]!;
@@ -273,14 +223,11 @@ void dropStudent(Map<String, Student> students, Map<String, Course> courses) {
 
   students.remove(studentId);
 
-  print(
-      'Student dropped successfully from all courses and removed from the system.');
+  print('Student dropped successfully from all courses and removed from the system.');
 }
 
-
-void updateStudent(Map<String, Student> students) {
-  String studentId =
-      readInput('Enter student ID', existingIds: students.keys.toList());
+Future<void> updateStudent(ApiService apiService, Map<String, Student> students) async {
+  String studentId = readInput('Enter student ID', existingIds: students.keys.toList());
 
   if (!students.containsKey(studentId)) {
     print('Student with ID $studentId does not exist.');
@@ -290,9 +237,7 @@ void updateStudent(Map<String, Student> students) {
   Student student = students[studentId]!;
 
   String newName = readInput('Enter new student name');
-  String newCoursesInput = readInput(
-      'Enter new course IDs the student is enrolled in (comma-separated)',
-      isOptional: true);
+  String newCoursesInput = readInput('Enter new course IDs the student is enrolled in (comma-separated)', isOptional: true);
   List<String> newCourses = newCoursesInput.isNotEmpty
       ? newCoursesInput.split(',').map((e) => e.trim()).toList()
       : [];
@@ -303,10 +248,8 @@ void updateStudent(Map<String, Student> students) {
   print('Student updated successfully.');
 }
 
-
-void updateCourse(Map<String, Course> courses) {
-  String courseId =
-      readInput('Enter course ID', existingIds: courses.keys.toList());
+Future<void> updateCourse(ApiService apiService, Map<String, Course> courses) async {
+  String courseId = readInput('Enter course ID', existingIds: courses.keys.toList());
 
   if (!courses.containsKey(courseId)) {
     print('Course with ID $courseId does not exist.');
@@ -317,16 +260,28 @@ void updateCourse(Map<String, Course> courses) {
 
   String newTitle = readInput('Enter new course title');
   String newInstructor = readInput('Enter new instructor name');
-  String newStudentsInput = readInput(
-      'Enter new student IDs enrolled in the course (comma-separated)',
-      isOptional: true);
+  String newStudentsInput = readInput('Enter new student IDs enrolled in the course (comma-separated)', isOptional: true);
   List<String> newStudents = newStudentsInput.isNotEmpty
       ? newStudentsInput.split(',').map((e) => e.trim()).toList()
       : [];
 
-  course.title = newTitle;
+  course.courseTitle = newTitle;
   course.instructorName = newInstructor;
   course.enrolledStudents = newStudents;
 
   print('Course updated successfully.');
 }
+
+
+void printAvailableCourses(Map<String, Course> courses) {
+  if (courses.isEmpty) {
+    print('No available courses at this time.');
+  } else {
+    print('Available Courses:');
+    for (var course in courses.values) {
+      print('- Course ID: ${course.courseId}, Title: ${course.courseTitle}, Instructor: ${course.instructorName}');
+    }
+  }
+}
+
+
