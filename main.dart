@@ -5,11 +5,11 @@ import 'api_service.dart';
 import 'utils.dart';
 
 Future<void> main() async {
-  final apiService = ApiService('https://crudcrud.com/api/9f58b421d0b341659140daa39cf1828f');
+  final apiService = ApiService('https://crudcrud.com/api/85d87863db2b42daba6142a9161690c7');
   
 
   final students = await apiService.fetchStudents();
-  final courses = await apiService.loadCourses();
+  final courses = await apiService.fetchCourses();
 
   bool running = true;
 
