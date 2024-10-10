@@ -1,4 +1,3 @@
-
 class Student {
   String name;
   String studentId;
@@ -7,11 +6,10 @@ class Student {
   Student(this.name, this.studentId, this.enrolledCourses);
 
   factory Student.fromJson(Map<String, dynamic> json) {
-
     return Student(
-      json['name'] ?? 'Unknown', 
-      json['studentId'] ?? 'Unknown', 
-      List<String>.from(json['enrolledCourses'] ?? []), 
+      json['name'] ?? 'Unknown',
+      json['studentId'] ?? 'Unknown',
+      List<String>.from(json['enrolledCourses'] ?? []),
     );
   }
 

@@ -1,25 +1,20 @@
-
-
 class Course {
   String courseId;
   String courseTitle;
   String instructorName;
   List<String> enrolledStudents;
 
-
-
-  Course(this.courseId, this.courseTitle, this.instructorName, this.enrolledStudents);
+  Course(this.courseId, this.courseTitle, this.instructorName,
+      this.enrolledStudents);
 
   factory Course.fromJson(Map<String, dynamic> json) {
     return Course(
-      json['courseId'] ?? 'Unknown', 
-      json['courseTitle'] ?? 'Unknown', 
-      json['instructorName'] ?? 'Unknown', 
-      List<String>.from(json['enrolledStudents'] ?? []), 
+      json['courseId'] ?? 'Unknown',
+      json['courseTitle'] ?? 'Unknown',
+      json['instructorName'] ?? 'Unknown',
+      List<String>.from(json['enrolledStudents'] ?? []),
     );
   }
-
-  get name => null;
 
   Map<String, dynamic> toJson() {
     return {
