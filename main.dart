@@ -5,7 +5,7 @@ import 'api_service.dart';
 import 'utils.dart';
 
 Future<void> main() async {
-  final apiService = ApiService('https://crudcrud.com/api/85d87863db2b42daba6142a9161690c7');
+  final apiService = ApiService('https://crudcrud.com/api/8ed332d4e5574fd6b50436c8f4da2962');
   
 
   final students = await apiService.fetchStudents();

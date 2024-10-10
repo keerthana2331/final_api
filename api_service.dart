@@ -8,7 +8,7 @@ class ApiService {
 
   ApiService(this.baseUrl);
 
-  // Fetch all students from the API
+
   Future<Map<String, Student>> fetchStudents() async {
     final response = await http.get(Uri.parse('$baseUrl/students'));
     if (response.statusCode == 200) {
@@ -22,7 +22,7 @@ class ApiService {
     }
   }
 
-  // Fetch all courses from the API
+
   Future<Map<String, Course>> fetchCourses() async {
     final response = await http.get(Uri.parse('$baseUrl/courses'));
     if (response.statusCode == 200) {
@@ -35,98 +35,94 @@ class ApiService {
       throw Exception('Failed to load courses');
     }
   }
+Future<void> enrollStudentInCourse(String studentId, String courseId) async {
+  final students = await fetchStudents();
+  final courses = await fetchCourses();
 
-  // Enroll a student in a course (with ID uniqueness check)
-  Future<void> enrollStudentInCourse(String studentId, String courseId) async {
-    // First, ensure the student and course exist
-    final students = await fetchStudents();
-    final courses = await fetchCourses();
 
-    if (!students.containsKey(studentId)) {
-      throw Exception('Student with ID $studentId does not exist');
-    }
-    if (!courses.containsKey(courseId)) {
-      throw Exception('Course with ID $courseId does not exist');
-    }
-
-    // Check if the student is already enrolled in the course to avoid duplication
-    final student = students[studentId];
-    if (student?.enrolledCourses.contains(courseId) == true) {
-      throw Exception('Student is already enrolled in this course');
-    }
-
-    // Enroll the student
-    final response = await http.post(
-      Uri.parse('$baseUrl/students/$studentId/enroll'),
-      headers: {'Content-Type': 'application/json'},
-      body: jsonEncode({'courseId': courseId}),
-    );
-
-    if (response.statusCode != 200) {
-      throw Exception('Failed to enroll student in course');
-    }
+  if (!students.containsKey(studentId)) {
+    throw Exception('Student with ID $studentId does not exist');
   }
 
-  // Drop a student from a course (with ID uniqueness check)
-  Future<void> dropStudentFromCourse(String studentId, String courseId) async {
-    // Ensure the student and course exist
-    final students = await fetchStudents();
-    final courses = await fetchCourses();
-
-    if (!students.containsKey(studentId)) {
-      throw Exception('Student with ID $studentId does not exist');
-    }
-    if (!courses.containsKey(courseId)) {
-      throw Exception('Course with ID $courseId does not exist');
-    }
-
-    // Ensure the student is actually enrolled in the course before dropping
-    final student = students[studentId];
-    if (student?.enrolledCourses.contains(courseId) == false) {
-      throw Exception('Student is not enrolled in this course');
-    }
-
-    // Drop the student from the course
-    final response = await http.post(
-      Uri.parse('$baseUrl/students/$studentId/drop'),
-      headers: {'Content-Type': 'application/json'},
-      body: jsonEncode({'courseId': courseId}),
-    );
-
-    if (response.statusCode != 200) {
-      throw Exception('Failed to drop student from course');
-    }
+  if (!courses.containsKey(courseId)) {
+    throw Exception('Course with ID $courseId does not exist');
   }
 
-  // Update student details (without changing the ID)
-  Future<void> updateStudent(String studentId, Student updatedStudent) async {
-    // Ensure the student exists
-    final students = await fetchStudents();
-    if (!students.containsKey(studentId)) {
-      throw Exception('Student with ID $studentId does not exist');
-    }
+  final response = await http.post(
+    Uri.parse('$baseUrl/students/$studentId/enroll'),
+    headers: {'Content-Type': 'application/json'},
+    body: jsonEncode({'courseId': courseId}),
+  );
 
-    // Proceed with the update (ID remains the same)
-    final response = await http.patch(
-      Uri.parse('$baseUrl/students/$studentId'),
-      headers: {'Content-Type': 'application/json'},
-      body: jsonEncode(updatedStudent.toJson()),
-    );
+  if (response.statusCode == 200) {
+    print('Student $studentId enrolled in course $courseId successfully.');
+  } else {
+    throw Exception('Failed to enroll student in course: ${response.body}');
+  }
+}
 
-    if (response.statusCode != 200) {
-      throw Exception('Failed to update student');
-    }
+
+  Future<void> dropstudentfromcourse(String studentId, String courseId) async {
+  final students = await fetchStudents();
+  // ignore: unused_local_variable
+  final courses = await fetchCourses();
+
+  if (!students.containsKey(studentId)) {
+    throw Exception('Student with ID $studentId does not exist');
   }
 
-  // Update course details (without changing the ID)
+
+  final student = students[studentId];
+  if (!student!.enrolledCourses.contains(courseId)) {
+    throw Exception('Student is not enrolled in this course');
+  }
+
+
+  final response = await http.delete(
+    Uri.parse('$baseUrl/students/$studentId/courses/$courseId'),
+  );
+
+  if (response.statusCode == 200) {
+    print('Course $courseId dropped for student $studentId successfully.');
+  } else {
+    throw Exception('Failed to drop course: ${response.body}');
+  }
+}
+
+
+  Future<void> updateStudent(String studentId, Map<String, dynamic> updates) async {
+  final existingStudents = await fetchStudents();
+
+  if (!existingStudents.containsKey(studentId)) {
+    throw Exception('Student with ID $studentId does not exist');
+  }
+
+
+  final response = await http.put(
+    Uri.parse('$baseUrl/students/$studentId'),
+    headers: {'Content-Type': 'application/json'},
+    body: jsonEncode(updates),
+  );
+
+  if (response.statusCode == 200) {
+    print('Student $studentId updated successfully.');
+  } else {
+    throw Exception('Failed to update student: ${response.body}');
+  }
+}
+
+
+
+
+  
   Future<void> updateCourse(String courseId, Course updatedCourse) async {
-    // Ensure the course exists
+
     final courses = await fetchCourses();
     if (!courses.containsKey(courseId)) {
       throw Exception('Course with ID $courseId does not exist');
     }
 
-    // Proceed with the update (ID remains the same)
+
     final response = await http.patch(
       Uri.parse('$baseUrl/courses/$courseId'),
       headers: {'Content-Type': 'application/json'},
@@ -138,37 +134,31 @@ class ApiService {
     }
   }
 
-  // Save students to API without duplicates
-  Future<void> saveStudents(Map<String, Student> students) async {
-    final existingStudents = await fetchStudents(); // Get existing students from API
+ Future<void> saveStudents(Map<String, Student> students) async {
+    final existingStudents = await fetchStudents(); 
 
     for (var student in students.values) {
       if (!existingStudents.containsKey(student.studentId)) {
-        // If student doesn't exist, create a new one
+     
         await createStudent(student);
-        print('Student ${student.studentId} saved successfully.');
-      } else {
-        print('Student ${student.studentId} already exists, skipping...');
       }
+      
     }
   }
 
-  // Save courses to API without duplicates
+ 
   Future<void> saveCourses(Map<String, Course> courses) async {
-    final existingCourses = await fetchCourses(); // Get existing courses from API
+    final existingCourses = await fetchCourses(); 
 
     for (var course in courses.values) {
       if (!existingCourses.containsKey(course.courseId)) {
-        // If course doesn't exist, create a new one
+ 
         await createCourse(course);
-        print('Course ${course.courseId} saved successfully.');
-      } else {
-        print('Course ${course.courseId} already exists, skipping...');
       }
+    
     }
   }
 
-  // Create a new student
   Future<void> createStudent(Student student) async {
     final response = await http.post(
       Uri.parse('$baseUrl/students'),
@@ -181,7 +171,6 @@ class ApiService {
     }
   }
 
-  // Create a new course
   Future<void> createCourse(Course course) async {
     final response = await http.post(
       Uri.parse('$baseUrl/courses'),
@@ -194,25 +183,37 @@ class ApiService {
     }
   }
 
-  // Delete a student from the API
-  Future<void> deleteStudent(String studentId) async {
-    final response = await http.delete(
-      Uri.parse('$baseUrl/students/$studentId'),
-    );
+Future<void> dropStudent(String studentId) async {
+  final existingStudents = await fetchStudents();
 
-    if (response.statusCode != 204) {
-      throw Exception('Failed to delete student');
-    }
+
+  if (!existingStudents.containsKey(studentId)) {
+    throw Exception('Student with ID $studentId does not exist');
   }
 
-  // Delete a course from the API
-  Future<void> deleteCourse(String courseId) async {
-    final response = await http.delete(
-      Uri.parse('$baseUrl/courses/$courseId'),
-    );
+ 
+  final response = await http.delete(
+    Uri.parse('$baseUrl/students/$studentId'),
+  );
 
-    if (response.statusCode != 204) {
-      throw Exception('Failed to delete course');
-    }
+  if (response.statusCode == 200) {
+    print('Student $studentId dropped successfully.');
+  } else {
+    throw Exception('Failed to drop student: ${response.body}');
   }
+}
+
+
+
+  Future<void> dropCourse(String studentId, String courseId) async {
+  final response = await http.delete(
+    Uri.parse('$baseUrl/students/$studentId/courses/$courseId'),
+  );
+
+  if (response.statusCode == 200) {
+    print('Course $courseId dropped for student $studentId successfully.');
+  } else {
+    throw Exception('Failed to drop course: ${response.body}');
+  }
+}
 }
