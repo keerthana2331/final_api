@@ -5,7 +5,7 @@ import 'utils.dart';
 
 Future<void> main() async {
   final apiService =
-      ApiService('https://crudcrud.com/api/90d7aacb30bc4ac885092b26b9d6d563');
+      ApiService('https://crudcrud.com/api/0928a43366764b08bc07289e98a6084b');
 
   bool running = true;
 
@@ -137,7 +137,7 @@ Future<void> viewStudentSchedule(ApiService apiService) async {
   }
 }
 
-// ... (other methods remain the same)
+
 
 Future<void> viewCourseRoster(ApiService apiService) async {
   String courseId = readInput('Enter course ID');

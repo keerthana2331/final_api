@@ -184,7 +184,6 @@ class ApiService {
         }
       }
 
-      // Delete the student
       final response = await http.delete(
         Uri.parse('$baseUrl/students/$studentId'),
       );
@@ -208,7 +207,7 @@ class ApiService {
       final course = courses[courseId]!;
       final students = await fetchStudents();
 
-      // Remove course from all enrolled students
+     
       for (var studentId in course.enrolledStudents) {
         if (students.containsKey(studentId)) {
           var student = students[studentId]!;
@@ -217,7 +216,7 @@ class ApiService {
         }
       }
 
-      // Delete the course
+   
       final response = await http.delete(
         Uri.parse('$baseUrl/courses/$courseId'),
       );
