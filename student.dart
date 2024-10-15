@@ -13,6 +13,8 @@ class Student {
     );
   }
 
+  get balance => null;
+
   Map<String, dynamic> toJson() {
     return {
       'name': name,
